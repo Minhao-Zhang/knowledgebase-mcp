@@ -1,3 +1,9 @@
+.roomodes
+documents/*
+memory-bank/*
+storage/*
+file_tracker.db
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
