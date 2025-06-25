@@ -1,3 +1,7 @@
+from llama_index.core.node_parser import (
+    SemanticSplitterNodeParser,
+)
+from llama_index.core import SimpleDirectoryReader
 import os
 import logging
 import sqlite3
@@ -54,6 +58,8 @@ def get_embedding_model():
         logger.error(
             f"Unsupported Embedding endpoint {config.EMBEDDING_SERVICE}. Only `openai`, `gemini`, and `ollama` are supported at the moment."
         )
+        raise ValueError(
+            "Only `openai`, `gemini`, and `ollama` are supported for embedding service.")
 
 
 def get_chroma_client(use_local_chroma: bool = False):
@@ -126,3 +132,53 @@ def calculate_md5(input_string: str) -> str:
     Calculates the MD5 hash for a given string.
     """
     return hashlib.md5(input_string.encode('utf-8')).hexdigest()
+
+
+def format_nodes(nodes_with_score):
+    result = ""
+    for i, node in enumerate(nodes_with_score):
+        result += f"DOC {i+1}: \nFile Path:`{node.node.metadata['file_path']}`\nContent:\n{node.node.get_content()}\n{"="*40}\n\n"
+    return result
+
+
+def update_index(index, embed_model):
+    conn = initialize_file_tracker_db()
+
+    documents = SimpleDirectoryReader(
+        input_dir=config.DOCUMENTS_DIRECTORY,
+        recursive=True,
+        exclude=parse_gitignore_style_file(),
+        filename_as_id=True
+    )
+
+    files = documents.load_data()
+    splitter = SemanticSplitterNodeParser(
+        embed_model=embed_model, include_prev_next_rel=False)
+
+    for f in files:
+        f_hash = hashlib.md5(f.get_content().encode('utf-8')).hexdigest()
+        if is_file_modified(conn, f.doc_id, f_hash):
+            index.delete_ref_doc(ref_doc_id=f.doc_id)
+            nodes = splitter.get_nodes_from_documents([f])
+            index.insert_nodes(nodes)
+            update_hash(conn, f.get_doc_id(), f_hash)
+    conn.close()
+
+
+def parse_gitignore_style_file(filepath: str = '.indexignore') -> list[str]:
+    """
+    Parses a .gitignore-style file into a list of strings, ignoring comments and empty lines.
+    If the file is not found, returns an empty list.
+    """
+    if not os.path.exists(filepath):
+        logger.info(f"File '{filepath}' not found. Returning empty list.")
+        return []
+
+    patterns = []
+    with open(filepath, 'r', encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith('#'):
+                patterns.append(line)
+    logger.info(f"Parsed {len(patterns)} patterns from '{filepath}'.")
+    return patterns

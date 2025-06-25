@@ -1,16 +1,11 @@
 import hashlib
 from fastmcp import FastMCP
 from llama_index.vector_stores.chroma import ChromaVectorStore
-from llama_index.core import SimpleDirectoryReader
+from llama_index.core import StorageContext, VectorStoreIndex
+
+
 from config import config
-from utils import (
-    configure_logging,
-    initialize_chroma,
-    get_embedding_model,
-    initialize_file_tracker_db,
-    is_file_modified,
-    update_hash
-)
+from utils import *
 
 logger = configure_logging()
 
@@ -23,22 +18,40 @@ mcp = FastMCP(
 chroma_collection = initialize_chroma(
     config.CHROMA_HOST, config.CHROMA_PORT, config.CHROMA_COLLECTION_NAME)
 vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
+storage_context = StorageContext.from_defaults(vector_store=vector_store)
 embed_model = get_embedding_model()
-
-conn = initialize_file_tracker_db()
-
-directory_loader = SimpleDirectoryReader(
-    input_dir=config.DOCUMENTS_DIRECTORY,
-    recursive=True,
-    exclude=["*.jpg", "*.png", "*.pdf"],
-    filename_as_id=True
+index = VectorStoreIndex.from_vector_store(
+    vector_store,
+    embed_model=embed_model,
 )
 
-files = directory_loader.load_data()
+update_index(index, embed_model)
 
-for f in files:
-    f_hash = hashlib.md5(f.get_content().encode('utf-8')).hexdigest()
-    if is_file_modified(conn, f.doc_id, f_hash):
-        update_hash(conn, f.get_doc_id(), f_hash)
+retriever = index.as_retriever()
 
-conn.close()
+
+@mcp.tool
+def query(query_text: str) -> str:
+    """Semantic search for a piece of text. You shall format this as detailed as possible. """
+    return format_nodes(retriever.retrieve(query_text))
+
+
+@mcp.tool
+def refresh_index():
+    """Refresh the vector store so that new documents can be queried. This might take a while."""
+    update_index(index, embed_model)
+
+
+@mcp.tool
+def reindex():
+    """DANGEROUS: This will erase all vectors in vector store and build them from the group up. This operation is time consuming."""
+    update_index(index, embed_model)
+
+
+if __name__ == "__main__":
+    mcp.run(
+        transport="http",
+        host="127.0.0.1",
+        port=config.MCP_PORT,
+        log_level=config.LOG_LEVEL,
+    )
