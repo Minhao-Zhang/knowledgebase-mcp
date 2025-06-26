@@ -1,37 +1,58 @@
 import os
+import yaml
 from dotenv import load_dotenv
 
 load_dotenv()
 
 
 class Config:
-    EMBEDDING_SERVICE: str = os.getenv(
-        "EMBEDDING_SERVICE", "openai")
-    EMBEDDING_API_BASE: str = os.getenv(
-        "EMBEDDING_API_BASE", "https://api.openai.com/v1")
-    EMBEDDING_API_KEY: str = os.getenv("EMBEDDING_API_KEY", "")
-    EMBEDDING_MODEL_NAME: str = os.getenv(
-        "EMBEDDING_MODEL_NAME", "text-embedding-ada-002")
-    DOCUMENTS_DIRECTORY: str = os.getenv("DOCUMENTS_DIRECTORY", "./documents")
+    _instance = None
 
-    LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(Config, cls).__new__(cls)
+            cls._instance._load_config()
+        return cls._instance
 
-    # ChromaDB specific configurations
-    CHROMA_HOST: str = os.getenv("CHROMA_HOST", "localhost")
-    CHROMA_PORT: int = int(os.getenv("CHROMA_PORT", "8001"))
-    CHROMA_COLLECTION_NAME: str = os.getenv(
-        "CHROMA_COLLECTION_NAME", "knowledgebase_mcp")
+    def _load_config(self):
+        config_path = os.path.join(os.path.dirname(__file__), 'config.yaml')
+        with open(config_path, 'r') as f:
+            config_data = yaml.safe_load(f)
 
-    MCP_PORT: int = int(os.getenv("MCP_PORT", "8002"))
+        # Load from YAML
+        self.embedding_service = config_data.get(
+            'embedding', {}).get('service')
+        self.embedding_api_base = config_data.get(
+            'embedding', {}).get('api_base')
+        self.embedding_model_name = config_data.get(
+            'embedding', {}).get('model_name')
+        self.documents_directory = config_data.get(
+            'documents', {}).get('directory')
+        self.log_level = config_data.get('logging', {}).get('level')
+        self.chroma_host = config_data.get('chroma', {}).get('host')
+        self.chroma_port = config_data.get('chroma', {}).get('port')
+        self.chroma_collection_name = config_data.get(
+            'chroma', {}).get('collection_name')
+        self.mcp_port = config_data.get('mcp', {}).get('port')
 
-    @classmethod
-    def validate_config(cls):
-        if not cls.EMBEDDING_API_KEY:
-            print(
-                "Warning: EMBEDDING_API_KEY is not set. Embedding functionality may be limited.")
-        if not os.path.exists(cls.DOCUMENTS_DIRECTORY):
-            print(
-                f"Warning: DOCUMENTS_DIRECTORY '{cls.DOCUMENTS_DIRECTORY}' does not exist.")
+        # Override with environment variables
+        self.embedding_api_key = os.getenv("EMBEDDING_API_KEY", "")
+        self.embedding_service = os.getenv(
+            "EMBEDDING_SERVICE", self.embedding_service)
+        self.embedding_api_base = os.getenv(
+            "EMBEDDING_API_BASE", self.embedding_api_base)
+        self.embedding_model_name = os.getenv(
+            "EMBEDDING_MODEL_NAME", self.embedding_model_name)
+        self.documents_directory = os.getenv(
+            "DOCUMENTS_DIRECTORY", self.documents_directory)
+        self.log_level = os.getenv("LOG_LEVEL", self.log_level)
+        self.chroma_host = os.getenv("CHROMA_HOST", self.chroma_host)
+        self.chroma_port = int(os.getenv("CHROMA_PORT", self.chroma_port)) if os.getenv(
+            "CHROMA_PORT") else self.chroma_port
+        self.chroma_collection_name = os.getenv(
+            "CHROMA_COLLECTION_NAME", self.chroma_collection_name)
+        self.mcp_port = int(os.getenv("MCP_PORT", self.mcp_port)) if os.getenv(
+            "MCP_PORT") else self.mcp_port
 
 
 config = Config()

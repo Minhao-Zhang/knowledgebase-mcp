@@ -1,0 +1,18 @@
+embedding:
+  service: ollama
+  api_base: http://host.docker.internal:11434
+  model_name: all-minilm
+
+documents:
+  directory: /ObsidianVault
+
+logging:
+  level: INFO
+
+chroma:
+  host: host.docker.internal
+  port: 8001
+  collection_name: default_collection
+
+mcp:
+  port: 8002

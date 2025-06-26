@@ -23,7 +23,7 @@ def update_index(index) -> list[bool]:
     Updates the document index by checking for modified files and re-indexing them.
     """
     documents = SimpleDirectoryReader(
-        input_dir=config.DOCUMENTS_DIRECTORY,
+        input_dir=config.documents_directory,
         recursive=True,
         exclude=parse_gitignore_style_file(),
         filename_as_id=True

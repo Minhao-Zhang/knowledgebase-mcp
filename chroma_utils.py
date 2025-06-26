@@ -9,39 +9,39 @@ from logging_utils import logger
 def initialize_chroma() -> chromadb.Collection:
     """Initializes ChromaDB client and returns the collection."""
     chroma_client = chromadb.HttpClient(
-        host=config.CHROMA_HOST, port=config.CHROMA_PORT)
+        host=config.chroma_host, port=config.chroma_port)
     chroma_collection = chroma_client.get_or_create_collection(
-        name=config.CHROMA_COLLECTION_NAME)
+        name=config.chroma_collection_name)
     return chroma_collection
 
 
 def get_embedding_model():
     """Initializes and returns the appropriate embedding model based on configuration."""
     logger.info(
-        f"Using embedding model: {config.EMBEDDING_MODEL_NAME} with base_url {config.EMBEDDING_API_BASE}")
-    if config.EMBEDDING_SERVICE == 'openai':
+        f"Using embedding model: {config.embedding_model_name} with base_url {config.embedding_api_base}")
+    if config.embedding_service == 'openai':
         from llama_index.embeddings.openai import OpenAIEmbedding
         return OpenAIEmbedding(
-            model=config.EMBEDDING_MODEL_NAME,
-            api_key=config.EMBEDDING_API_KEY,
-            api_base=config.EMBEDDING_API_BASE
+            model=config.embedding_model_name,
+            api_key=config.embedding_api_key,
+            api_base=config.embedding_api_base
         )
-    elif config.EMBEDDING_API_BASE == 'gemini':
+    elif config.embedding_service == 'gemini':
         from llama_index.embeddings.gemini import GeminiEmbedding
         return GeminiEmbedding(
-            model=config.EMBEDDING_MODEL_NAME,
-            api_key=config.EMBEDDING_API_KEY,
-            api_base=config.EMBEDDING_API_BASE
+            model=config.embedding_model_name,
+            api_key=config.embedding_api_key,
+            api_base=config.embedding_api_base
         )
-    elif config.EMBEDDING_SERVICE == 'ollama':
+    elif config.embedding_service == 'ollama':
         from llama_index.embeddings.ollama import OllamaEmbedding
         return OllamaEmbedding(
-            model_name=config.EMBEDDING_MODEL_NAME,
-            base_url=config.EMBEDDING_API_BASE
+            model_name=config.embedding_model_name,
+            base_url=config.embedding_api_base
         )
     else:
         logger.error(
-            f"Unsupported Embedding endpoint {config.EMBEDDING_SERVICE}. Only `openai`, `gemini`, and `ollama` are supported at the moment."
+            f"Unsupported Embedding endpoint {config.embedding_service}. Only `openai`, `gemini`, and `ollama` are supported at the moment."
         )
         raise ValueError(
             "Only `openai`, `gemini`, and `ollama` are supported for embedding service.")
@@ -61,5 +61,5 @@ def get_chroma_client(use_local_chroma: bool = False):
         return chromadb.PersistentClient(path=persist_directory)
     else:
         logger.info(
-            f"Initializing remote ChromaDB client at {config.CHROMA_HOST}:{config.CHROMA_PORT}")
-        return chromadb.HttpClient(host=config.CHROMA_HOST, port=config.CHROMA_PORT)
+            f"Initializing remote ChromaDB client at {config.chroma_host}:{config.chroma_port}")
+        return chromadb.HttpClient(host=config.chroma_host, port=config.chroma_port)

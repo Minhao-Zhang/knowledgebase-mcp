@@ -8,3 +8,4 @@ chromadb-client
 fastmcp
 python-dotenv
 gunicorn
+PyYAML

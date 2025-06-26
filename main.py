@@ -53,7 +53,7 @@ def get_file_content(file_path: str) -> str:
     logger.info(f"Attempting to read file: {file_path}")
 
     abs_file_path = Path(file_path).resolve()
-    documents_dir_abs = Path(config.DOCUMENTS_DIRECTORY).resolve()
+    documents_dir_abs = Path(config.documents_directory).resolve()
 
     if os.path.commonpath([abs_file_path, documents_dir_abs]) != str(documents_dir_abs):
         raise ValueError(
@@ -77,6 +77,6 @@ if __name__ == "__main__":
     mcp.run(
         transport="http",
         host="127.0.0.1",
-        port=config.MCP_PORT,
-        log_level=config.LOG_LEVEL,
+        port=config.mcp_port,
+        log_level=config.log_level,
     )
