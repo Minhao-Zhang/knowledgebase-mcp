@@ -6,6 +6,7 @@ import os
 import logging
 import sqlite3
 import hashlib
+from typing import Any
 
 import chromadb
 
@@ -30,7 +31,7 @@ def initialize_chroma(host, port, collection_name):
     return chroma_collection
 
 
-def get_embedding_model():
+def get_embedding_model() -> Any:
     """Initializes and returns the appropriate embedding model based on configuration."""
     logger.info(
         f"Using embedding model: {config.EMBEDDING_MODEL_NAME} with base_url {config.EMBEDDING_API_BASE}")
@@ -62,7 +63,7 @@ def get_embedding_model():
             "Only `openai`, `gemini`, and `ollama` are supported for embedding service.")
 
 
-def get_chroma_client(use_local_chroma: bool = False):
+def get_chroma_client(use_local_chroma: bool = False) -> Any:
     """
     Initializes and returns a ChromaDB client.
     If use_local_chroma is True, a persistent local client is used.
@@ -135,14 +136,20 @@ def calculate_md5(input_string: str) -> str:
     return hashlib.md5(input_string.encode('utf-8')).hexdigest()
 
 
-def format_nodes(nodes_with_score):
+def format_nodes(nodes_with_score) -> str:
+    """
+    Formats a list of nodes with scores into a human-readable string.
+    """
     result = ""
     for i, node in enumerate(nodes_with_score):
         result += f"DOC {i+1}: \nFile Path:`{node.node.metadata['file_path']}`\nContent:\n{node.node.get_content()}\n{"="*40}\n\n"
     return result
 
 
-def update_index(index, embed_model):
+def update_index(index, embed_model) -> None:
+    """
+    Updates the document index by checking for modified files and re-indexing them.
+    """
     conn = initialize_file_tracker_db()
 
     documents = SimpleDirectoryReader(
@@ -183,3 +190,31 @@ def parse_gitignore_style_file(filepath: str = '.indexignore') -> list[str]:
                 patterns.append(line)
     logger.info(f"Parsed {len(patterns)} patterns from '{filepath}'.")
     return patterns
+
+
+def clear_index(use_local_chroma: bool = False):
+    """
+    Clears all entries in ChromaDB and deletes the file_tracker_db.
+    """
+    logger.info("Clearing ChromaDB and deleting file tracker database...")
+
+    # Clear ChromaDB
+    try:
+        chroma_client = get_chroma_client(use_local_chroma)
+        chroma_client.delete_collection(name=config.CHROMA_COLLECTION_NAME)
+        logger.info(
+            f"ChromaDB collection '{config.CHROMA_COLLECTION_NAME}' cleared.")
+    except Exception as e:
+        logger.error(f"Error clearing ChromaDB collection: {e}")
+
+    # Delete file_tracker_db
+    if os.path.exists(config.SQLITE_DB_PATH):
+        try:
+            os.remove(config.SQLITE_DB_PATH)
+            logger.info(
+                f"File tracker database '{config.SQLITE_DB_PATH}' deleted.")
+        except Exception as e:
+            logger.error(f"Error deleting file tracker database: {e}")
+    else:
+        logger.info(
+            f"File tracker database '{config.SQLITE_DB_PATH}' does not exist. No need to delete.")

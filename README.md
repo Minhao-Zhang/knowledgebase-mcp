@@ -1,54 +1,143 @@
+
 # KnowledgeBase MCP: Your Personal RAG Vector Store
 
-KnowledgeBase MCP is a lightweight, powerful, and containerized retrieval solution. It allows you to turn a local directory of documents into a smart, queryable knowledge base, accessible via a simple API. Designed to run on your personal machine, it automatically keeps your data indexed and ready for retrieval.
-
-This system focuses on the "Retrieval" part of Retrieval-Augmented Generation (RAG). It ingests your documents, indexes them, and provides a powerful search tool to find the most relevant context for any given query.
+KnowledgeBase MCP is a lightweight, containerized solution for creating a queryable knowledge base from your local documents. It focuses on the "Retrieval" part of Retrieval-Augmented Generation (RAG), indexing your documents and providing a search API to find relevant context.
 
 ## ✨ Features
 
-* **🔌 External Embedding Models**: Connects to OpenAI-compatible embedding endpoints (e.g., OpenAI, or other self-hosted solutions). These models run externally and are not part of the Dockerized stack.
-* **📂 Automatic Directory Indexing**: Point it to a directory, and KnowledgeBase MCP will ingest and index all supported files (PDF, TXT, DOCX, etc.).
-* **🔄 Persistent File Tracking**: Automatically detects changes, additions, or deletions of files between sessions to ensure the knowledge base is always up-to-date without re-indexing unchanged documents.
-* **🚫 Configurable Filtering**: Use a dedicated ignore file, similar in concept to `.gitignore`, to specify patterns for files and directories that should be excluded from indexing.
-* **⚡ Real-time API**: Exposes its retrieval capabilities as "Tools" using the **FastMCP** framework, providing an efficient Server-Sent Events (SSE) endpoint for real-time streaming of retrieved document chunks.
-* **🖼️ Multi-modal Ready**: The architecture is designed to be extended to support multi-modal embeddings for text-and-image search.
+* **External Embedding Models**: Connects to OpenAI-compatible embedding endpoints (OpenAI, Gemini, Ollama).
+* **Automatic Directory Indexing**: Ingests and indexes supported files (PDF, TXT, DOCX) from a specified directory.
+* **Persistent File Tracking**: Detects and manages file changes (additions, modifications, deletions) across sessions.
+* **Configurable Filtering**: Uses a `.indexignore` file to exclude specific files/directories from indexing.
+* **Real-time API**: Exposes retrieval capabilities as FastMCP "Tools" via a Server-Sent Events (SSE) endpoint.
+* **Multi-modal Ready**: Architecture supports future expansion for multi-modal embeddings.
 
 ## 🛠️ Tech Stack
 
-* **Indexing & Retrieval Framework**: [**LlamaIndex**](https://www.llamaindex.ai/) is the core engine for data ingestion, indexing, and executing retrieval queries against the data.
-* **Vector Database**: [**ChromaDB**](https://www.trychroma.com/) provides efficient, local storage and retrieval of vector embeddings.
-* **API Framework**: [**FastMCP**](https://github.com/cognitive-metamodel/fastmcp) (built on FastAPI) exposes the core LlamaIndex functionalities as structured "Tools" over a Server-Sent Events (SSE) protocol.
-* **Containerization**: [**Docker**](https://www.docker.com/) & [**Docker Compose**](https://docs.docker.com/compose/) containerize and manage the application and database services.
-* **File Tracking Database**: [**SQLite**](https://www.sqlite.org/index.html) is used to persistently track the state of indexed files.
+* **Indexing & Retrieval**: [**LlamaIndex**](https://www.llamaindex.ai/)
+* **Vector Database**: [**ChromaDB**](https://www.trychroma.com/)
+* **API Framework**: [**FastMCP**](https://github.com/cognitive-metamodel/fastmcp) (built on FastAPI)
+* **Containerization**: [**Docker**](https://www.docker.com/) & [**Docker Compose**](https://docs.docker.com/compose/)
+* **File Tracking**: [**SQLite**](https://www.sqlite.org/index.html)
+* **Dependencies**: `pip` and `requirements.txt`
 
 ## ⚙️ How File Change Tracking Works
 
-To ensure that the knowledge base remains synchronized with your local document directory even when the system is shut down and restarted, KnowledgeBase MCP implements a robust file tracking mechanism.
+KnowledgeBase MCP uses a **SQLite** database to track indexed files by their path and MD5 hash. On startup, it scans the `DOCUMENTS_DIRECTORY` and compares file hashes with the database:
 
-This system uses a **SQLite** database to store a record of every file that has been indexed. For each file, it stores its path and an **MD5 hash** of its content. A hash is a unique fingerprint for the file's content; if the content changes, the hash changes.
+* **New Files**: Indexed and added to the database.
+* **Modified Files**: Old version removed, new version indexed, database hash updated.
+* **Deleted Files**: Removed from the index and database.
+* **Unchanged Files**: Skipped for efficiency.
 
-When the application starts, it performs the following synchronization logic:
+This ensures the knowledge base is always synchronized with your document directory.
 
-1. **Scan Directory**: It scans the `DOCUMENTS_DIRECTORY` to get a list of all current files and calculates the MD5 hash for each one.
-2. **Compare with Database**: It compares this list with the records stored in the SQLite database.
-    * **New Files**: If a file exists in the directory but not in the database, it is treated as **new**. It gets indexed, and its file path and hash are added to the database.
-    * **Modified Files**: If a file exists in both the directory and the database, their hashes are compared. If the hashes do not match, the file has been **modified**. The old version is removed from the index, the new version is indexed, and the hash in the database is updated.
-    * **Deleted Files**: If a file exists in the database but is no longer in the directory, it is considered **deleted**. It is removed from the index, and its record is deleted from the database.
-    * **Unchanged Files**: If a file's hash in the directory matches its hash in the database, the file is **unchanged** and is skipped, saving significant processing time.
+## 🚀 Getting Started
 
-This process guarantees that the retrieval system is always an accurate reflection of your documents directory without the overhead of re-indexing the entire dataset on every startup.
+### Prerequisites
 
-## Configuration
+* [Docker](https://www.docker.com/get-started/) and [Docker Compose](https://docs.docker.com/compose/install/)
 
-Configuration is managed through environment variables, which you should place in a `.env` file in the project's root directory.
+### Installation and Setup
 
-* `EMBEDDING_API_BASE`: The endpoint for your embedding service (e.g., `https://api.openai.com/v1`).
-* `EMBEDDING_API_KEY`: Your authentication key for the embedding service.
-* `EMBEDDING_MODEL_NAME`: The specific model identifier (e.g., `text-embedding-ada-002`).
-* `DOCUMENTS_DIRECTORY`: The local path to your documents (e.g., `./documents`).
-* `CHUNK_SIZE`: This defines the size of the text fragments (in tokens) that your documents are broken into before being embedded.
-* `CHUNK_OVERLAP`: This defines how many tokens are repeated between adjacent chunks.
-* `LOG_LEVEL`: Controls the verbosity of application logs.
-* `CHROMA_HOST`: Host URL of the Chroma server.
-* `CHROMA_PORT`: Host port of the Chroma Server.
-* `CHROMA_COLLECTION_NAME`: Collection name.
+1. **Clone the repository:**
+
+    ```bash
+    git clone https://github.com/your-repo/knowledgebase-mcp.git
+    cd knowledgebase-mcp
+    ```
+
+2. **Prepare your documents:**
+    Create a `documents` directory in the project root or modify `docker-compose.yml` to map your desired local document directory to `/app/documents` inside the container.
+
+    ```bash
+    mkdir documents
+    # Place your files here
+    ```
+
+    Example `docker-compose.yml` volume modification:
+
+    ```yaml
+    volumes:
+      - ./documents:/app/documents
+      - knowledgebase_volume:/sqlite_db
+    ```
+
+3. **Configure Environment Variables:**
+    Copy `.env.example` to `.env` and edit it with your settings.
+
+    ```bash
+    cp .env.example .env
+    ```
+
+    Key variables in `.env`:
+    * `LOG_LEVEL`: Logging verbosity (e.g., `INFO`).
+    * `MCP_PORT`: Port for the FastMCP server (default: `8002`).
+    * `EMBEDDING_SERVICE`: `openai`, `gemini`, or `ollama`.
+    * `EMBEDDING_API_BASE`: URL of your embedding service (e.g., `http://host.docker.internal:11434` for host Ollama).
+    * `EMBEDDING_API_KEY`: API key (dummy for Ollama).
+    * `EMBEDDING_MODEL_NAME`: Embedding model (e.g., `all-minilm`).
+    * `DOCUMENTS_DIRECTORY`: Path inside the container (default: `./documents`).
+    * `CHUNK_SIZE`, `CHUNK_OVERLAP`: Document chunking parameters.
+    * `CHROMA_HOST`: ChromaDB service name (e.g., `chromadb` for Docker Compose).
+    * `CHROMA_PORT`: ChromaDB port (default: `8000`).
+    * `CHROMA_COLLECTION_NAME`: ChromaDB collection name.
+    * `SQLITE_DB_PATH`: SQLite DB path inside the container (default: `file_tracker.db`).
+
+4. **Build and Run with Docker Compose:**
+
+    ```bash
+    docker-compose up --build -d
+    ```
+
+    This builds the image, starts ChromaDB, and then the KnowledgeBase MCP service, which begins indexing.
+    Monitor logs:
+
+    ```bash
+    docker-compose logs -f knowledgebase-mcp
+    ```
+
+### Initial Data Loading and Indexing
+
+On first run, all documents in `DOCUMENTS_DIRECTORY` are indexed. Subsequent runs only process new or modified files.
+
+## 💡 Usage
+
+KnowledgeBase MCP provides FastMCP tools via an HTTP API on port `8002`.
+
+### Available Tools
+
+* **`query(query_text: str) -> str`**:
+    Performs semantic search. Returns relevant document chunks.
+
+    ```bash
+    curl -N -X POST http://localhost:8002/tool/query \
+         -H "Content-Type: application/json" \
+         -d '{"query_text": "What is the main purpose of KnowledgeBase MCP?"}'
+    ```
+
+    (Returns an SSE stream)
+
+* **`refresh_index()`**:
+    Scans `DOCUMENTS_DIRECTORY` and updates the index for new, modified, or deleted files.
+
+    ```bash
+    curl -N -X POST http://localhost:8002/tool/refresh_index
+    ```
+
+* **`reindex()`**:
+    **DANGEROUS**: Erases all vectors and rebuilds the entire index from scratch. Use with caution.
+
+    ```bash
+    curl -N -X POST http://localhost:8002/tool/reindex
+    ```
+
+## 📂 Ignored Files
+
+* **`.indexignore`**: Excludes files/directories from indexing (e.g., `*.png`, `*.pdf`).
+* **`.dockerignore`**: Excludes files/directories when building the Docker image.
+* **`.gitignore`**: Standard Git ignore file.
+
+## 🤝 Contributing
+
+Refer to the `LICENSE` file for contribution details.

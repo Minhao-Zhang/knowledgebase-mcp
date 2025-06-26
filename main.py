@@ -8,6 +8,7 @@ from utils import (
     configure_logging,
     initialize_chroma,
     get_embedding_model,
+    clear_index,
     update_index,
     format_nodes
 )
@@ -50,6 +51,7 @@ def refresh_index():
 @mcp.tool
 def reindex():
     """DANGEROUS: This will erase all vectors in vector store and build them from the group up. This operation is time consuming."""
+    clear_index()
     update_index(index, embed_model)
 
 
