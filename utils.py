@@ -8,9 +8,6 @@ import sqlite3
 import hashlib
 
 import chromadb
-from llama_index.embeddings.openai import OpenAIEmbedding
-from llama_index.embeddings.gemini import GeminiEmbedding
-from llama_index.embeddings.ollama import OllamaEmbedding
 
 from config import config
 
@@ -36,23 +33,26 @@ def initialize_chroma(host, port, collection_name):
 def get_embedding_model():
     """Initializes and returns the appropriate embedding model based on configuration."""
     logger.info(
-        f"Using embedding model: {config.EMBEDDING_MODEL_NAME}")
+        f"Using embedding model: {config.EMBEDDING_MODEL_NAME} with base_url {config.EMBEDDING_API_BASE}")
     if config.EMBEDDING_SERVICE == 'openai':
+        from llama_index.embeddings.openai import OpenAIEmbedding
         return OpenAIEmbedding(
             model=config.EMBEDDING_MODEL_NAME,
             api_key=config.EMBEDDING_API_KEY,
             api_base=config.EMBEDDING_API_BASE
         )
     elif config.EMBEDDING_API_BASE == 'gemini':
+        from llama_index.embeddings.gemini import GeminiEmbedding
         return GeminiEmbedding(
             model=config.EMBEDDING_MODEL_NAME,
             api_key=config.EMBEDDING_API_KEY,
             api_base=config.EMBEDDING_API_BASE
         )
     elif config.EMBEDDING_SERVICE == 'ollama':
+        from llama_index.embeddings.ollama import OllamaEmbedding
         return OllamaEmbedding(
             model_name=config.EMBEDDING_MODEL_NAME,
-            api_base=config.EMBEDDING_API_BASE
+            base_url=config.EMBEDDING_API_BASE
         )
     else:
         logger.error(
@@ -80,9 +80,9 @@ def get_chroma_client(use_local_chroma: bool = False):
         return chromadb.HttpClient(host=config.CHROMA_HOST, port=config.CHROMA_PORT)
 
 
-def initialize_file_tracker_db(db_path="file_tracker.db"):
+def initialize_file_tracker_db():
     """Initializes the SQLite database for file tracking."""
-    conn = sqlite3.connect(db_path)
+    conn = sqlite3.connect(config.SQLITE_DB_PATH)
     cursor = conn.cursor()
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS files_hash (
@@ -91,7 +91,8 @@ def initialize_file_tracker_db(db_path="file_tracker.db"):
         )
     """)
     conn.commit()
-    logger.info(f"Initialized file tracking database at: {db_path}")
+    logger.info(
+        f"Initialized file tracking database at: {config.SQLITE_DB_PATH}")
     return conn
 
 

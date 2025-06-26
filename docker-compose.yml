@@ -1,0 +1,29 @@
+services:
+  chromadb:
+    image: chromadb/chroma
+    volumes:
+      - knowledgebase_volume:/data
+    ports:
+      - "8001:8000"
+    healthcheck:
+      test: [ "CMD", "/bin/bash", "-c", "cat < /dev/null > /dev/tcp/localhost/8000" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  
+  knowledgebase-mcp:
+    build: .
+    env_file:
+      - .env
+    ports:
+      - "8002:8002"
+      - "11434:11434"
+    volumes:
+      - ../ObsidianVault:/app/documents
+      - knowledgebase_volume:/sqlite_db
+    depends_on:
+      chromadb:
+        condition: service_healthy
+
+volumes:
+  knowledgebase_volume:

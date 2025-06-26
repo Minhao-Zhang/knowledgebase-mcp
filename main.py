@@ -1,11 +1,16 @@
-import hashlib
 from fastmcp import FastMCP
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.core import StorageContext, VectorStoreIndex
 
 
 from config import config
-from utils import *
+from utils import (
+    configure_logging,
+    initialize_chroma,
+    get_embedding_model,
+    update_index,
+    format_nodes
+)
 
 logger = configure_logging()
 
@@ -48,10 +53,13 @@ def reindex():
     update_index(index, embed_model)
 
 
+app = mcp.http_app()
+
+
 if __name__ == "__main__":
     mcp.run(
         transport="http",
-        host="127.0.0.1",
+        host="0.0.0.0",
         port=config.MCP_PORT,
         log_level=config.LOG_LEVEL,
     )
