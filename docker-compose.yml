@@ -11,6 +11,8 @@ services:
       timeout: 3s
       retries: 5
   
+    restart: unless-stopped
+
   knowledgebase-mcp:
     build: .
     env_file:
@@ -23,6 +25,7 @@ services:
     depends_on:
       chromadb:
         condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   knowledgebase_volume:

@@ -6,15 +6,6 @@ from config import config
 from logging_utils import logger
 
 
-def initialize_chroma() -> chromadb.Collection:
-    """Initializes ChromaDB client and returns the collection."""
-    chroma_client = chromadb.HttpClient(
-        host=config.chroma_host, port=config.chroma_port)
-    chroma_collection = chroma_client.get_or_create_collection(
-        name=config.chroma_collection_name)
-    return chroma_collection
-
-
 def get_embedding_model():
     """Initializes and returns the appropriate embedding model based on configuration."""
     logger.info(

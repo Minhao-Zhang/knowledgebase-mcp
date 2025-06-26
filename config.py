@@ -5,6 +5,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+class DocumentCollection:
+    def __init__(self, directory: str, collection_name: str):
+        self.directory = directory
+        self.collection_name = collection_name
+
+
 class Config:
     _instance = None
 
@@ -26,33 +32,21 @@ class Config:
             'embedding', {}).get('api_base')
         self.embedding_model_name = config_data.get(
             'embedding', {}).get('model_name')
-        self.documents_directory = config_data.get(
-            'documents', {}).get('directory')
+
+        self.document_collections = {}
+        for item in config_data.get('document_collections', []):
+            directory = item.get('directory')
+            collection_name = item.get('collection_name')
+            if directory and collection_name:
+                self.document_collections[collection_name] = DocumentCollection(
+                    directory, collection_name)
+
         self.log_level = config_data.get('logging', {}).get('level')
         self.chroma_host = config_data.get('chroma', {}).get('host')
         self.chroma_port = config_data.get('chroma', {}).get('port')
-        self.chroma_collection_name = config_data.get(
-            'chroma', {}).get('collection_name')
         self.mcp_port = config_data.get('mcp', {}).get('port')
 
-        # Override with environment variables
         self.embedding_api_key = os.getenv("EMBEDDING_API_KEY", "")
-        self.embedding_service = os.getenv(
-            "EMBEDDING_SERVICE", self.embedding_service)
-        self.embedding_api_base = os.getenv(
-            "EMBEDDING_API_BASE", self.embedding_api_base)
-        self.embedding_model_name = os.getenv(
-            "EMBEDDING_MODEL_NAME", self.embedding_model_name)
-        self.documents_directory = os.getenv(
-            "DOCUMENTS_DIRECTORY", self.documents_directory)
-        self.log_level = os.getenv("LOG_LEVEL", self.log_level)
-        self.chroma_host = os.getenv("CHROMA_HOST", self.chroma_host)
-        self.chroma_port = int(os.getenv("CHROMA_PORT", self.chroma_port)) if os.getenv(
-            "CHROMA_PORT") else self.chroma_port
-        self.chroma_collection_name = os.getenv(
-            "CHROMA_COLLECTION_NAME", self.chroma_collection_name)
-        self.mcp_port = int(os.getenv("MCP_PORT", self.mcp_port)) if os.getenv(
-            "MCP_PORT") else self.mcp_port
 
 
 config = Config()

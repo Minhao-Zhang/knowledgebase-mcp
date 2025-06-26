@@ -18,12 +18,12 @@ def format_nodes(nodes_with_score) -> str:
     return result
 
 
-def update_index(index) -> list[bool]:
+def update_index(index, directory: str) -> list[bool]:
     """
     Updates the document index by checking for modified files and re-indexing them.
     """
     documents = SimpleDirectoryReader(
-        input_dir=config.documents_directory,
+        input_dir=directory,
         recursive=True,
         exclude=parse_gitignore_style_file(),
         filename_as_id=True
