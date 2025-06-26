@@ -1,4 +1,4 @@
-# KnowledgeBase MCP: Your Personal RAG Vector Store
+# KnowledgeBase MCP: Vector Store on Your Notes
 
 KnowledgeBase MCP is a lightweight, containerized solution for creating a queryable knowledge base from your local documents. It focuses on the "Retrieval" part of Retrieval-Augmented Generation (RAG), indexing your documents and providing a search API to find relevant context. The knowledge base keeps itself up-to-date as your source files change.
 
@@ -12,19 +12,11 @@ KnowledgeBase MCP is a lightweight, containerized solution for creating a querya
 * **Real-time API**: Exposes retrieval capabilities as FastMCP "Tools" via a Server-Sent Events (SSE) endpoint.
 * **Multi-modal Ready**: Architecture supports future expansion for multi-modal embeddings.
 
-## 🛠️ Tech Stack
-
-* **Indexing & Retrieval**: [**LlamaIndex**](https://www.llamaindex.ai/)
-* **Vector Database**: [**ChromaDB**](https://www.trychroma.com/)
-* **API Framework**: [**FastMCP**](https://github.com/cognitive-metamodel/fastmcp) (built on FastAPI)
-* **Containerization**: [**Docker**](https://www.docker.com/) & [**Docker Compose**](https://docs.docker.com/compose/)
-* **File Tracking**: [**SQLite**](https://www.sqlite.org/index.html)
-
 ## 🚀 Getting Started
 
 ### Installation and Setup
 
-1. **Clone the repository:**
+1. **Clone the repository**
 2. **Prepare your documents:**
     The project now supports indexing documents from multiple directories, each mapped to a distinct Chroma collection. This is configured in `config.yaml` using the `document_collections` list. Each item in this list has a `directory` (the path inside the container) and a `collection_name`.
 
@@ -83,6 +75,7 @@ KnowledgeBase MCP provides FastMCP tools via an HTTP API on port `8002`.
 
 * **`refresh_index(collection_name: str)`**:
     Scans the directory associated with the specified collection and updates its index for new, modified, or deleted files.
+
 * **`list_collections() -> list[str]`**:
     Lists all available Chroma collection names configured in the system.
 

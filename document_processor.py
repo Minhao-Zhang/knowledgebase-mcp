@@ -1,11 +1,7 @@
 import os
-import hashlib
-from llama_index.core.node_parser import SemanticSplitterNodeParser
 from llama_index.core import SimpleDirectoryReader
 
-from config import config
 from logging_utils import logger
-from chroma_utils import get_embedding_model
 
 
 def format_nodes(nodes_with_score) -> str:

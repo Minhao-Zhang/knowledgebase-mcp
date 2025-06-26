@@ -1,11 +1,11 @@
-llama-index
-llama-index-core
-llama-index-vector-stores-chroma
+llama-index==0.12.44
+llama-index-core==0.12.44
+llama-index-vector-stores-chroma==0.4.2
 # llama-index-embeddings-openai
 # llama-index-embeddings-gemini
-llama-index-embeddings-ollama
-chromadb-client
-fastmcp
-python-dotenv
-gunicorn
-PyYAML
+llama-index-embeddings-ollama==0.6.0
+chromadb==1.0.13
+fastmcp==2.9.0
+python-dotenv==1.1.1
+gunicorn==23.0.0
+PyYAML==6.0.2

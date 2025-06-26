@@ -1,6 +1,5 @@
 import chromadb
 import os
-from typing import Any
 
 from config import config
 from logging_utils import logger
