@@ -5,7 +5,8 @@ KnowledgeBase MCP is a lightweight, containerized solution for creating a querya
 
 ## ✨ Features
 
-* **External Embedding Models**: Connects to OpenAI-compatible embedding endpoints (OpenAI, Gemini, Ollama).
+* **External Embedding Models**: Connects to various embedding endpoints, including OpenAI, Gemini, and Ollama.
+* **Secure File Content Retrieval**: Safely retrieve the content of indexed documents via a dedicated API tool, ensuring access is restricted to the configured documents directory.
 * **Automatic Directory Indexing**: Ingests and indexes supported files (PDF, TXT, DOCX) from a specified directory.
 * **Persistent File Tracking**: Detects and manages file changes (additions, modifications, deletions) across sessions.
 * **Configurable Filtering**: Uses a `.indexignore` file to exclude specific files/directories from indexing.
@@ -19,48 +20,18 @@ KnowledgeBase MCP is a lightweight, containerized solution for creating a querya
 * **API Framework**: [**FastMCP**](https://github.com/cognitive-metamodel/fastmcp) (built on FastAPI)
 * **Containerization**: [**Docker**](https://www.docker.com/) & [**Docker Compose**](https://docs.docker.com/compose/)
 * **File Tracking**: [**SQLite**](https://www.sqlite.org/index.html)
-* **Dependencies**: `pip` and `requirements.txt`
-
-## ⚙️ How File Change Tracking Works
-
-KnowledgeBase MCP uses a **SQLite** database to track indexed files by their path and MD5 hash. On startup, it scans the `DOCUMENTS_DIRECTORY` and compares file hashes with the database:
-
-* **New Files**: Indexed and added to the database.
-* **Modified Files**: Old version removed, new version indexed, database hash updated.
-* **Deleted Files**: Removed from the index and database.
-* **Unchanged Files**: Skipped for efficiency.
-
-This ensures the knowledge base is always synchronized with your document directory.
 
 ## 🚀 Getting Started
-
-### Prerequisites
-
-* [Docker](https://www.docker.com/get-started/) and [Docker Compose](https://docs.docker.com/compose/install/)
 
 ### Installation and Setup
 
 1. **Clone the repository:**
-
-    ```bash
-    git clone https://github.com/your-repo/knowledgebase-mcp.git
-    cd knowledgebase-mcp
-    ```
-
 2. **Prepare your documents:**
-    Create a `documents` directory in the project root or modify `docker-compose.yml` to map your desired local document directory to `/app/documents` inside the container.
-
-    ```bash
-    mkdir documents
-    # Place your files here
-    ```
-
-    Example `docker-compose.yml` volume modification:
+    For the directory you wish to index and semantically search, alter volumes under `docker-compose.yml`'s `knowledgebase-mcp` to
 
     ```yaml
     volumes:
-      - ./documents:/app/documents
-      - knowledgebase_volume:/sqlite_db
+      - YOUR_RELATIVE_PATH_TO_DIRECTORY:DOCUMENTS_DIRECTORY_ENV_VAR_IN_DOT_ENV_FILE
     ```
 
 3. **Configure Environment Variables:**
@@ -73,16 +44,14 @@ This ensures the knowledge base is always synchronized with your document direct
     Key variables in `.env`:
     * `LOG_LEVEL`: Logging verbosity (e.g., `INFO`).
     * `MCP_PORT`: Port for the FastMCP server (default: `8002`).
-    * `EMBEDDING_SERVICE`: `openai`, `gemini`, or `ollama`.
-    * `EMBEDDING_API_BASE`: URL of your embedding service (e.g., `http://host.docker.internal:11434` for host Ollama).
-    * `EMBEDDING_API_KEY`: API key (dummy for Ollama).
-    * `EMBEDDING_MODEL_NAME`: Embedding model (e.g., `all-minilm`).
-    * `DOCUMENTS_DIRECTORY`: Path inside the container (default: `./documents`).
-    * `CHUNK_SIZE`, `CHUNK_OVERLAP`: Document chunking parameters.
-    * `CHROMA_HOST`: ChromaDB service name (e.g., `chromadb` for Docker Compose).
-    * `CHROMA_PORT`: ChromaDB port (default: `8000`).
-    * `CHROMA_COLLECTION_NAME`: ChromaDB collection name.
-    * `SQLITE_DB_PATH`: SQLite DB path inside the container (default: `file_tracker.db`).
+    * `EMBEDDING_SERVICE`: Specifies the embedding service to use (`openai`, `gemini`, or `ollama`).
+    * `EMBEDDING_API_BASE`: The base URL for your embedding service (e.g., `http://host.docker.internal:11434` for a local Ollama instance).
+    * `EMBEDDING_API_KEY`: API key for the embedding service (dummy value for Ollama).
+    * `EMBEDDING_MODEL_NAME`: The specific embedding model to use (e.g., `text-embedding-ada-002` for OpenAI, `all-minilm` for Ollama).
+    * `DOCUMENTS_DIRECTORY`: Path inside the container where your documents are located (default: `./documents`).
+    * `CHROMA_HOST`: The hostname or IP address of the ChromaDB server (e.g., `chromadb` if running in Docker Compose).
+    * `CHROMA_PORT`: The port on which the ChromaDB server is listening (default: `8001`).
+    * `CHROMA_COLLECTION_NAME`: The name of the collection within ChromaDB where document embeddings will be stored.
 
 4. **Build and Run with Docker Compose:**
 
@@ -91,11 +60,6 @@ This ensures the knowledge base is always synchronized with your document direct
     ```
 
     This builds the image, starts ChromaDB, and then the KnowledgeBase MCP service, which begins indexing.
-    Monitor logs:
-
-    ```bash
-    docker-compose logs -f knowledgebase-mcp
-    ```
 
 ### Initial Data Loading and Indexing
 
@@ -125,18 +89,18 @@ KnowledgeBase MCP provides FastMCP tools via an HTTP API on port `8002`.
     curl -N -X POST http://localhost:8002/tool/refresh_index
     ```
 
-* **`reindex()`**:
-    **DANGEROUS**: Erases all vectors and rebuilds the entire index from scratch. Use with caution.
+* **`get_file_content(file_path: str) -> str`**:
+    Returns the content of a single file given a path, verifying it's under the configured documents directory.
 
     ```bash
-    curl -N -X POST http://localhost:8002/tool/reindex
+    curl -N -X POST http://localhost:8002/tool/get_file_content \
+         -H "Content-Type: application/json" \
+         -d '{"file_path": "./documents/your_document.txt"}'
     ```
 
 ## 📂 Ignored Files
 
 * **`.indexignore`**: Excludes files/directories from indexing (e.g., `*.png`, `*.pdf`).
-* **`.dockerignore`**: Excludes files/directories when building the Docker image.
-* **`.gitignore`**: Standard Git ignore file.
 
 ## 🤝 Contributing
 

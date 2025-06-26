@@ -13,8 +13,7 @@ class Config:
     EMBEDDING_MODEL_NAME: str = os.getenv(
         "EMBEDDING_MODEL_NAME", "text-embedding-ada-002")
     DOCUMENTS_DIRECTORY: str = os.getenv("DOCUMENTS_DIRECTORY", "./documents")
-    CHUNK_SIZE: int = int(os.getenv("CHUNK_SIZE", "1024"))
-    CHUNK_OVERLAP: int = int(os.getenv("CHUNK_OVERLAP", "20"))
+
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
 
     # ChromaDB specific configurations

@@ -28,7 +28,10 @@ def update_index(index) -> list[bool]:
         exclude=parse_gitignore_style_file(),
         filename_as_id=True
     ).load_data()
-    return index.refresh_ref_docs(documents)
+    updated = index.refresh_ref_docs(documents)
+    logger.info(
+        f"Refresh complete. {sum(updated)} out of {len(updated)} files have been updated.")
+    return updated
 
 
 def parse_gitignore_style_file(filepath: str = '.indexignore') -> list[str]:

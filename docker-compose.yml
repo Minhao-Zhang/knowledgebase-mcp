@@ -19,8 +19,7 @@ services:
       - "8002:8002"
       - "11434:11434"
     volumes:
-      - ../test-folder:/app/documents
-      - knowledgebase_volume:/sqlite_db
+      - ../ObsidianVault:/ObsidianVault
     depends_on:
       chromadb:
         condition: service_healthy

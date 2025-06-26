@@ -39,12 +39,11 @@ def query(query_text: str) -> str:
 
 
 @mcp.tool
-def refresh_index() -> str:
+def refresh_index():
     """Refresh the vector store so that new documents can be queried. This might take a while."""
     logger.info("Updating Index.")
     result = update_index(index)
-    logger.info(
-        f"Refresh complete. {sum(result)} out of {len(result)} files have been updated.")
+
     return f"Refresh complete. {sum(result)} out of {len(result)} files have been updated."
 
 
