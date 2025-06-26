@@ -7,9 +7,8 @@ from pathlib import Path
 
 from config import config
 from logging_utils import configure_logging, logger
-from chroma_utils import initialize_chroma, get_embedding_model, clear_index
+from chroma_utils import initialize_chroma, get_embedding_model
 from document_processor import update_index, format_nodes
-from file_tracker import delete_file_tracker_db
 
 logger = configure_logging()
 
@@ -28,7 +27,7 @@ index = VectorStoreIndex.from_vector_store(
     vector_store,
     embed_model=embed_model,
 )
-update_index(index, embed_model)
+update_index(index)
 retriever = index.as_retriever()
 
 
@@ -40,19 +39,13 @@ def query(query_text: str) -> str:
 
 
 @mcp.tool
-def refresh_index():
+def refresh_index() -> str:
     """Refresh the vector store so that new documents can be queried. This might take a while."""
     logger.info("Updating Index.")
-    update_index(index, embed_model)
-
-
-@mcp.tool
-def reindex():
-    """DANGEROUS: This will erase all vectors in vector store and build them from the group up. This operation might take A LONG TIME."""
-    logger.info("Re-indexing.")
-    clear_index()
-    delete_file_tracker_db()
-    update_index(index, embed_model)
+    result = update_index(index)
+    logger.info(
+        f"Refresh complete. {sum(result)} out of {len(result)} files have been updated.")
+    return f"Refresh complete. {sum(result)} out of {len(result)} files have been updated."
 
 
 @mcp.tool

@@ -23,8 +23,6 @@ class Config:
     CHROMA_COLLECTION_NAME: str = os.getenv(
         "CHROMA_COLLECTION_NAME", "knowledgebase_mcp")
 
-    # Sqlite3 specific configurations
-    SQLITE_DB_PATH: str = os.getenv("SQLITE_DB_PATH", "file_tracker.db")
     MCP_PORT: int = int(os.getenv("MCP_PORT", "8002"))
 
     @classmethod

@@ -5,7 +5,6 @@ from llama_index.core import SimpleDirectoryReader
 
 from config import config
 from logging_utils import logger
-from file_tracker import initialize_file_tracker_db, is_file_modified, update_hash
 from chroma_utils import get_embedding_model
 
 
@@ -19,31 +18,17 @@ def format_nodes(nodes_with_score) -> str:
     return result
 
 
-def update_index(index, embed_model) -> None:
+def update_index(index) -> list[bool]:
     """
     Updates the document index by checking for modified files and re-indexing them.
     """
-    conn = initialize_file_tracker_db()
-
     documents = SimpleDirectoryReader(
         input_dir=config.DOCUMENTS_DIRECTORY,
         recursive=True,
         exclude=parse_gitignore_style_file(),
         filename_as_id=True
-    )
-
-    files = documents.load_data()
-    splitter = SemanticSplitterNodeParser(
-        embed_model=embed_model, include_prev_next_rel=False)
-
-    for f in files:
-        f_hash = hashlib.md5(f.get_content().encode('utf-8')).hexdigest()
-        if is_file_modified(conn, f.doc_id, f_hash):
-            index.delete_ref_doc(ref_doc_id=f.doc_id)
-            nodes = splitter.get_nodes_from_documents([f])
-            index.insert_nodes(nodes)
-            update_hash(conn, f.get_doc_id(), f_hash)
-    conn.close()
+    ).load_data()
+    return index.refresh_ref_docs(documents)
 
 
 def parse_gitignore_style_file(filepath: str = '.indexignore') -> list[str]:

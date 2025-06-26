@@ -63,23 +63,3 @@ def get_chroma_client(use_local_chroma: bool = False):
         logger.info(
             f"Initializing remote ChromaDB client at {config.CHROMA_HOST}:{config.CHROMA_PORT}")
         return chromadb.HttpClient(host=config.CHROMA_HOST, port=config.CHROMA_PORT)
-
-
-def clear_index(use_local_chroma: bool = False):
-    """
-    Clears all entries in ChromaDB.
-    """
-    logger.info("Clearing ChromaDB...")
-
-    # Clear ChromaDB
-    try:
-        chroma_client = get_chroma_client(use_local_chroma)
-        chroma_client.delete_collection(name=config.CHROMA_COLLECTION_NAME)
-        logger.info(
-            f"ChromaDB collection '{config.CHROMA_COLLECTION_NAME}' cleared.")
-        chroma_client.get_or_create_collection(
-            name=config.CHROMA_COLLECTION_NAME)
-        logger.info(
-            f"ChromaDB collection '{config.CHROMA_COLLECTION_NAME}' re-created.")
-    except Exception as e:
-        logger.error(f"Error clearing ChromaDB collection: {e}")
