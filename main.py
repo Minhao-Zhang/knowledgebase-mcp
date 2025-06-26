@@ -76,7 +76,7 @@ app = mcp.http_app()
 if __name__ == "__main__":
     mcp.run(
         transport="http",
-        host="0.0.0.0",
+        host="127.0.0.1",
         port=config.MCP_PORT,
         log_level=config.LOG_LEVEL,
     )
