@@ -7,8 +7,8 @@ services:
       - "8001:8000"
     healthcheck:
       test: [ "CMD", "/bin/bash", "-c", "cat < /dev/null > /dev/tcp/localhost/8000" ]
-      interval: 10s
-      timeout: 5s
+      interval: 5s
+      timeout: 3s
       retries: 5
   
   knowledgebase-mcp:
@@ -19,7 +19,7 @@ services:
       - "8002:8002"
       - "11434:11434"
     volumes:
-      - ../ObsidianVault:/app/documents
+      - ../test-folder:/app/documents
       - knowledgebase_volume:/sqlite_db
     depends_on:
       chromadb:
