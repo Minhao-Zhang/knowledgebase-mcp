@@ -1,7 +1,7 @@
 embedding:
   service: ollama
   api_base: http://host.docker.internal:11434
-  model_name: all-minilm
+  model_name: nomic-embed-text:v1.5
 
 document_collections:
   - directory: /ObsidianVault
